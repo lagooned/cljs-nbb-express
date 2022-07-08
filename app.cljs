@@ -10,24 +10,22 @@
 
 (defn go [n c]
   (if (>= 0 n) c
-      (let [[_ bigb]
-            (last
-             (take-while
-              (fn [[_ b]] (<= b n))
-              (iterate
-               (memoize (fn [[a b]] [b (+ a b)]))
-               [0 1])))]
-        (recur (- n bigb) (+ 1 c)))))
+      (let [[_ b'] (->> [0 1]
+                        (iterate (memoize (fn [[a b]] [b (+ a b)])))
+                        (take-while (fn [[_ b]] (<= b n)))
+                        (last))]
+        (recur (- n b') (+ 1 c)))))
 
-(defn fibs-lt [n]
+(defn fibs< [n]
   (go n 0))
 
-(.get app "/fibs/:n"
-      (fn foo [req res]
-        (->> (aget (aget req "params") "n")
-             (fibs-lt)
-             (str)
-             (.send res))))
+(.get
+ app "/fibs/:n"
+ (fn foo [req res]
+   (->> (aget (aget req "params") "n")
+        (fibs<)
+        (str)
+        (.send res))))
 
 (.listen app port (fn [] (println "Example app listening on port" port)))
 
